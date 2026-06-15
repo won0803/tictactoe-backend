@@ -1,0 +1,86 @@
+plugins {
+    id 'java'
+    id 'war' // JSP 사용 및 배포를 위한 WAR 패키징 설정
+    id 'org.springframework.boot' version '3.0.6'
+    id 'io.spring.dependency-management' version '1.1.0'
+}
+
+group = 'seeya'
+version = '0.0.1-SNAPSHOT'
+sourceCompatibility = '17' // 자바 17 버전 사용
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    // --- 스프링 부트 기본 스타터 ---
+    implementation 'org.springframework.boot:spring-boot-starter-jdbc' // DB 연결 기본 라이브러리
+    implementation 'org.springframework.boot:spring-boot-starter-web'  // MVC 패턴(컨트롤러 등) 구현용
+    implementation 'org.springframework.boot:spring-boot-starter-web-services' // 웹 서비스 개발 지원
+
+    // --- 보안 및 암호화 ---
+    implementation 'org.mindrot:jbcrypt:0.4' // 비밀번호 해싱(암호화) 유틸리티
+    implementation 'org.springframework.security:spring-security-core:6.0.3' // 스프링 보안 핵심 기능
+
+    // --- 서버 및 테스트 ---
+    providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat' // 내장 톰캣 서버
+    testImplementation 'org.springframework.boot:spring-boot-starter-test' // 단위 테스트 지원
+
+    // --- 롬복 (Lombok) : Getter, Setter 자동 생성 ---
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // --- 데이터베이스 (MySQL & MyBatis) ---
+    implementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter:3.0.0' // MyBatis 연동
+    runtimeOnly 'mysql:mysql-connector-java:8.0.22' // MySQL 드라이버
+
+    // --- JSP 및 JSTL (화면 구현) ---
+    // 스프링 부트 3.0 이상은 'jakarta' 네임스페이스를 사용해야 합니다.
+    implementation 'org.apache.tomcat.embed:tomcat-embed-jasper' // JSP 파일을 컴파일하는 엔진
+    implementation 'jakarta.servlet:jakarta.servlet-api'
+    implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api'
+    implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl'
+
+    // --- 로그 관리 (Log4j2 & log4jdbc) ---
+    // SQL 쿼리를 콘솔에 예쁘게(정렬해서) 찍어주기 위한 설정입니다.
+    compileOnly 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4:1.16'
+    implementation 'org.apache.logging.log4j:log4j-api:2.20.0'
+    implementation 'org.apache.logging.log4j:log4j-core:2.20.0'
+    implementation 'org.bgee.log4jdbc-log4j2:log4jdbc-log4j2-jdbc4.1:1.16'
+
+    // --- 부가 기능 (AOP & JWT) ---
+    implementation 'org.springframework.boot:spring-boot-starter-aop' // 공통 로직(로그 등) 처리를 위한 AOP
+    implementation 'io.jsonwebtoken:jjwt:0.9.1' // 토큰 기반 인증(JWT) 사용 시 필요
+
+    // --- XML 데이터 처리 (JAXB) ---
+    implementation 'com.sun.xml.bind:jaxb-impl:4.0.1'
+    implementation 'com.sun.xml.bind:jaxb-core:4.0.1'
+
+    // --- 외부 유틸리티 라이브러리 ---
+    implementation group: 'org.json', name: 'json', version: '20230227' // JSON 데이터 파싱용
+    implementation group: 'com.jcraft', name: 'jsch', version: '0.1.44-1' // SSH 접속 및 파일 전송용
+
+    // 엑셀(Excel) 파일 읽기/쓰기 기능 (POI)
+    implementation group: 'org.apache.poi', name: 'poi-ooxml', version: '3.9'
+    implementation group: 'org.apache.poi', name: 'poi', version: '3.9'
+
+    // HTTP 통신을 위한 클라이언트
+    implementation group: 'org.apache.httpcomponents', name: 'httpclient', version: '4.5'
+
+    // PDF 생성 기능
+    implementation group: 'com.itextpdf', name: 'itextpdf', version: '5.0.6'
+
+    // --- 개발 생산성 도구 ---
+    implementation 'org.springframework.boot:spring-boot-devtools' // 코드 수정 시 서버 자동 재시작
+    implementation 'org.jsoup:jsoup:1.15.3' // HTML 크롤링 및 파싱 유틸리티
+
+    // --- 파일 업로드 및 분석 ---
+    implementation group: 'commons-io', name: 'commons-io', version: '2.5' // 파일 처리 유틸
+    implementation group: 'commons-fileupload', name: 'commons-fileupload', version: '1.4' // 파일 업로드 기능
+    implementation 'org.apache.tika:tika-core:2.4.1' // 파일 형식(MIME type) 탐지
+}
+
+tasks.named('test') {
+    useJUnitPlatform()
+}

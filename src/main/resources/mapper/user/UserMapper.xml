@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="seeya.insight.user.mapper.UserMapper">
+
+    <resultMap id="UserResultMap" type="seeya.insight.user.domain.User">
+        <id     column="USER_ID"    property="userId"/>
+        <result column="USER_PW"    property="password"/>
+        <result column="USER_NICNM" property="nickname"/>
+        <result column="USER_EML"   property="email"/>
+        <result column="USER_ICON"  property="userIcon"/>
+    </resultMap>
+
+    <resultMap id="userProfileMap" type="seeya.insight.user.domain.User">
+        <id     property="userId"   column="USER_ID" />
+        <result property="nickname" column="USER_NICNM" />
+        <result property="userIcon" column="USER_ICON" />
+        <result property="winCount" column="WIN_CNT" />
+        <result property="loseCount" column="LOSE_CNT" />
+        <result property="drawCount" column="DRAW_CNT" />
+    </resultMap>
+
+    <sql id="userColumns">
+        USER_ID, USER_PW, USER_NICNM, USER_EML, USER_ICON
+    </sql>
+
+    <insert id="insert" parameterType="seeya.insight.user.domain.User">
+        INSERT INTO t_users_lwc (USER_ID, USER_PW, USER_NICNM, USER_EML)
+        VALUES (#{userId}, #{password}, #{nickname}, #{email})
+    </insert>
+
+    <select id="findByUserId" resultMap="UserResultMap">
+        SELECT <include refid="userColumns"/> FROM t_users_lwc WHERE USER_ID = #{userId}
+    </select>
+
+    <select id="findByUsername" resultMap="UserResultMap">
+        SELECT <include refid="userColumns"/> FROM t_users_lwc WHERE USER_ID = #{username}
+    </select>
+
+    <select id="findByEmail" resultMap="UserResultMap">
+        SELECT <include refid="userColumns"/> FROM t_users_lwc WHERE USER_EML = #{email}
+    </select>
+
+    <select id="findAll" resultMap="UserResultMap">
+        SELECT <include refid="userColumns"/> FROM t_users_lwc ORDER BY USER_ID ASC
+    </select>
+
+    <update id="update" parameterType="seeya.insight.user.domain.User">
+        UPDATE t_users_lwc
+        <set>
+            <if test="password != null and password != ''"> USER_PW = #{password}, </if>
+            <if test="nickname != null"> USER_NICNM = #{nickname}, </if>
+            <if test="email != null"> USER_EML = #{email}, </if>
+            <if test="userIcon != null"> USER_ICON = #{userIcon}, </if>
+        </set>
+        WHERE USER_ID = #{userId}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM t_users_lwc WHERE USER_ID = #{id}
+    </delete>
+
+    <select id="existsByEmail" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM t_users_lwc WHERE USER_EML = #{value})
+    </select>
+
+    <select id="existsByUsername" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM t_users_lwc WHERE USER_ID = #{value})
+    </select>
+
+    <select id="existsByNickname" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM t_users_lwc WHERE USER_NICNM = #{value})
+    </select>
+
+    <select id="existsByUserIdAndEmail" resultType="boolean">
+        SELECT EXISTS (SELECT 1 FROM t_users_lwc WHERE USER_ID = #{userId} AND USER_EML = #{email})
+    </select>
+
+    <select id="existsNicknameExcludingUser" resultType="boolean">
+        SELECT EXISTS(SELECT 1 FROM t_users_lwc WHERE USER_NICNM = #{newNickname} AND USER_ID != #{userId})
+    </select>
+
+    <update id="updatePasswordByUserId">
+        UPDATE t_users_lwc SET USER_PW = #{newPassword} WHERE USER_ID = #{userId}
+    </update>
+
+    <update id="updateNickname">
+        UPDATE t_users_lwc SET USER_NICNM = #{newNickname} WHERE USER_ID = #{userId}
+    </update>
+
+    <update id="updateUserIcon">
+        UPDATE t_users_lwc SET USER_ICON = #{userIcon} WHERE USER_ID = #{userId}
+    </update>
+
+    <select id="findUserProfile" resultMap="userProfileMap">
+        SELECT U.USER_ID, U.USER_NICNM, U.USER_ICON, R.WIN AS WIN_CNT, R.LOSE AS LOSE_CNT, R.DRAW AS DRAW_CNT
+        FROM t_users_lwc U
+        LEFT JOIN t_users_rank_lwc R ON U.USER_ID = R.USER_ID
+        WHERE U.USER_ID = #{userId}
+    </select>
+
+    <select id="findAllUserRanks" resultType="seeya.insight.game.domain.UserRank">
+        SELECT USER_ID AS userId, WIN AS wins, LOSE AS losses, DRAW AS draws
+        FROM t_users_rank_lwc
+    </select>
+
+    <select id="findUserRecordByUserId" resultType="seeya.insight.user.domain.User">
+        SELECT u.USER_ID AS userId, u.USER_NICNM AS nickname, u.USER_ICON AS userIcon,
+        r.WIN AS winCount, r.LOSE AS loseCount, r.DRAW AS drawCount
+        FROM t_users_lwc u
+        LEFT JOIN t_users_rank_lwc r ON u.USER_ID = r.USER_ID
+        WHERE u.USER_ID = #{userId}
+    </select>
+
+    <insert id="upsertUserRank">
+        INSERT INTO t_users_rank_lwc (USER_ID, WIN, LOSE, DRAW)
+        VALUES (#{userId}, #{wins}, #{losses}, #{draws})
+        ON DUPLICATE KEY UPDATE WIN = #{wins}, LOSE = #{losses}, DRAW = #{draws}
+    </insert>
+
+    <update id="resetUserRank">
+        UPDATE t_users_rank_lwc SET WIN = 0, DRAW = 0, LOSE = 0 WHERE USER_ID = #{userId}
+    </update>
+
+    <delete id="deleteUserRankByUserId">
+        DELETE FROM t_users_rank_lwc WHERE USER_ID = #{userId}
+    </delete>
+
+    <select id="findAllActiveRooms" resultType="seeya.insight.game.domain.GameRoom">
+        SELECT SEQ AS roomId, TITLE AS roomTitle, PLAYER1 AS playerO, PLAYER2 AS playerX,
+        STATUS AS status, BOARD AS boardData, RGTR_ID AS managerId, CURR_TURN AS currentTurn
+        FROM t_game_lwc WHERE STATUS IS NOT NULL
+    </select>
+
+    <insert id="insertGameRoom" parameterType="seeya.insight.game.domain.GameRoom">
+        INSERT INTO t_game_lwc (SEQ, TITLE, PLAYER1, STATUS, BOARD, RGTR_ID, CURR_TURN, REG_DT)
+        VALUES (#{roomId}, #{roomTitle}, #{playerO}, #{status}, #{boardData}, #{managerId}, #{playerO}, DATE_FORMAT(NOW(), '%Y-%m-%d %H:%i:%s'))
+    </insert>
+
+    <update id="updateGameRoom">
+        UPDATE t_game_lwc
+        SET PLAYER2 = #{playerX}, STATUS = #{status}, BOARD = #{boardData}, CURR_TURN = #{currentTurn}
+        WHERE SEQ = #{roomId}
+    </update>
+
+</mapper>
